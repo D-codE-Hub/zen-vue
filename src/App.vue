@@ -1,527 +1,523 @@
 <!-- The exported code uses Tailwind CSS. Install Tailwind CSS in your dev environment to ensure all styles work. -->
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- POS Profile Selection Modal -->
-    <div v-if="showPosProfileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg shadow-xl w-96 max-h-[90vh] overflow-y-auto">
-        <div class="p-6">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-gray-800">Select POS Profile</h2>
-          </div>
-          <div class="mb-6">
-            <div class="mb-4">
-              <label class="block text-gray-700 font-medium mb-2">POS Profile</label>
-              <div class="relative">
-                <button @click="togglePosProfileDropdown"
-                  class="w-full px-3 py-2 bg-gray-50 rounded-md text-left text-sm flex items-center justify-between border border-gray-200 !rounded-button">
-                  <span>{{ selectedPosProfile ? selectedPosProfile.name : 'Select POS Profile' }}</span>
-                  <i class="fas fa-chevron-down text-gray-400"></i>
-                </button>
-                <div v-if="showPosProfileDropdown"
-                  class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-48 overflow-y-auto">
-                  <div v-for="profile in posProfiles" :key="profile.id" @click="selectPosProfile(profile)"
-                    class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm">
-                    {{ profile.name }}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="mb-4">
-              <label class="block text-gray-700 font-medium mb-2">POS Name</label>
-              <input type="text" v-model="posName" placeholder="Enter POS Name"
-                class="w-full px-3 py-2 rounded-md border-none bg-gray-100 text-sm focus:ring-2 focus:ring-indigo-500">
-            </div>
-          </div>
-          <div class="flex space-x-3">
-            <button @click="confirmPosProfile" :disabled="!canConfirmPosProfile" :class="[
-              'flex-1 py-3 rounded-md font-medium cursor-pointer !rounded-button whitespace-nowrap',
-              canConfirmPosProfile ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            ]">
-              Confirm
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- SEO Meta Tags -->
-    <div v-if="false">
-      <meta name="description"
-        content="FoodiePoint POS - Advanced Restaurant Management System. Order management, table booking, and payment processing made easy.">
-      <meta name="keywords" content="restaurant pos, food ordering, table management, digital menu, payment system">
-      <meta name="author" content="FoodiePoint">
-      <meta property="og:title" content="FoodiePoint POS System">
-      <meta property="og:description" content="Advanced Restaurant Management System">
-      <meta property="og:type" content="website">
-      <meta name="twitter:card" content="summary_large_image">
-      <meta name="twitter:title" content="FoodiePoint POS System">
-      <meta name="twitter:description" content="Advanced Restaurant Management System">
-    </div>
-    <!-- Top Navigation Bar -->
-    <header class="bg-white shadow-md">
-      <div class="container mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
-        <div class="flex items-center w-full md:w-auto justify-between">
-          <h1 class="text-xl md:text-2xl font-bold text-indigo-700">FoodiePoint POS</h1>
-          <button class="md:hidden text-gray-600" @click="toggleMobileMenu">
-            <i class="fas fa-bars text-xl"></i>
+  <div class="min-h-screen bg-gray-50 relative">
+    <!-- Top Drawer Menu -->
+    <transition name="slide-down">
+      <div v-if="showTopMenu" class="fixed top-0 left-0 w-full bg-white shadow-lg z-40 p-4">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-xl font-bold text-indigo-700 cursor-pointer" @click="showTopMenu = false">
+            Rooms & Tables
+          </span>
+         <button @click="showTopMenu = false" class="text-gray-500 hover:text-indigo-600">
+            <i class="fas fa-times text-xl"></i>
           </button>
         </div>
-        <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6 w-full md:w-auto"
-          :class="{ 'hidden': !showMobileMenu, 'md:flex': true }">
-          <div class="text-gray-600">
-            <span class="font-medium">{{ currentDate }}</span> |
-            <span>{{ currentTime }}</span>
-          </div>
-          <div class="flex items-center">
-            <i class="fas fa-user-circle text-indigo-600 text-xl mr-2"></i>
-            <span class="font-medium text-gray-700">John Smith</span>
-          </div>
-          <div class="flex space-x-4">
-            <button class="text-gray-600 hover:text-indigo-600 cursor-pointer">
-              <i class="fas fa-home text-lg"></i>
-            </button>
-            <button class="text-gray-600 hover:text-indigo-600 cursor-pointer">
-              <i class="fas fa-cog text-lg"></i>
-            </button>
-            <button class="text-gray-600 hover:text-red-600 cursor-pointer">
-              <i class="fas fa-sign-out-alt text-lg"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
-    <div class="container mx-auto px-4 py-6">
-      <!-- Main Content Area -->
-      <div class="flex flex-col space-y-6">
-        <!-- Room Selection Tabs -->
-        <div class="bg-white rounded-lg shadow-md p-4">
-          <h2 class="text-lg font-semibold text-gray-800 mb-3">Select Room</h2>
-          <div class="flex space-x-2 overflow-x-auto pb-2">
+        <!-- Rooms Section -->
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800 mb-2">Rooms</h2>
+          <div class="flex flex-wrap gap-2 mb-4">
             <button v-for="(room, index) in rooms" :key="index" @click="selectRoom(room)" :class="[
-              'px-4 py-2 rounded-md font-medium whitespace-nowrap cursor-pointer !rounded-button',
+              'px-3 py-1 rounded-md font-medium cursor-pointer',
               selectedRoom === room ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             ]">
               {{ room.name }}
             </button>
           </div>
         </div>
-        <!-- Table Selection Grid -->
-        <div class="bg-white rounded-lg shadow-md p-4">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-semibold text-gray-800">
-              Tables in {{ selectedRoom.name }}
-            </h2>
-            <div class="flex items-center space-x-4">
-              <div class="flex items-center">
-                <div class="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
-                <span class="text-sm text-gray-600">Available</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 rounded-full bg-red-500 mr-1"></div>
-                <span class="text-sm text-gray-600">Occupied</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 rounded-full bg-yellow-500 mr-1"></div>
-                <span class="text-sm text-gray-600">Reserved</span>
-              </div>
-            </div>
-          </div>
-          <div class="overflow-x-auto pb-2">
-            <div class="flex gap-3 min-w-max pr-2">
-              <div v-for="table in selectedRoom.tables" :key="table.id" @click="selectTable(table)" :class="[
-                'p-3 rounded-lg border-2 flex flex-col items-center justify-center w-24 h-24 cursor-pointer transition-all shrink-0',
-                getTableStatusClass(table),
-                selectedTable?.id === table.id ? 'ring-2 ring-offset-2 ring-indigo-500' : ''
-              ]">
-                <i class="fas fa-utensils text-lg mb-1"></i>
-                <span class="font-bold text-sm">T{{ table.number }}</span>
-                <span class="text-xs">{{ table.seats }} seats</span>
-              </div>
+        <!-- Tables Section -->
+        <div>
+          <h2 class="text-lg font-semibold text-gray-800 mb-2">
+            Tables in {{ selectedRoom.name }}
+          </h2>
+          <div class="flex flex-wrap gap-2">
+            <div v-for="table in selectedRoom.tables" :key="table.id" @click="selectTable(table)" :class="[
+              'p-2 rounded-lg border flex flex-col items-center w-20 cursor-pointer',
+              getTableStatusClass(table),
+              selectedTable?.id === table.id ? 'ring-2 ring-indigo-500' : ''
+            ]">
+              <i class="fas fa-utensils mb-1"></i>
+              <span class="font-bold text-xs">T{{ table.number }}</span>
+              <span class="text-xs">{{ table.seats }} seats</span>
             </div>
           </div>
         </div>
-        <!-- Order Processing Area -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Menu Categories and Items -->
-          <div class="lg:col-span-2 bg-white rounded-lg shadow-md">
-            <div class="flex flex-col sm:flex-row h-full">
-              <!-- Categories Sidebar -->
-              <div class="w-full sm:w-1/4 border-b sm:border-b-0 sm:border-r border-gray-200 p-4">
-                <h3 class="font-semibold text-gray-700 mb-4">Categories</h3>
-                <div class="space-y-2">
-                  <button v-for="(category, index) in menuCategories" :key="index" @click="selectCategory(category)"
-                    :class="[
-                      'w-full text-left px-3 py-2 rounded-md cursor-pointer whitespace-nowrap !rounded-button',
-                      selectedCategory === category ? 'bg-indigo-100 text-indigo-700 font-medium' : 'text-gray-600 hover:bg-gray-100'
-                    ]">
-                    <i :class="['mr-2', category.icon]"></i>
-                    {{ category.name }}
+      </div>
+    </transition>
+
+    <!-- Main Content (always full width) -->
+    <div class="w-full">
+      <!-- POS Profile Selection Modal -->
+      <div v-if="showPosProfileModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+        style="background: rgba(0,0,0,0.4);">
+        <div class="bg-white rounded-lg shadow-xl w-96 max-h-[90vh] overflow-y-auto">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-xl font-bold text-gray-800">Select POS Profile</h2>
+            </div>
+            <div class="mb-6">
+              <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">POS Profile</label>
+                <div class="relative">
+                  <button @click="togglePosProfileDropdown"
+                    class="w-full px-3 py-2 bg-gray-50 rounded-md text-left text-sm flex items-center justify-between border border-gray-200 !rounded-button">
+                    <span>{{ selectedPosProfile ? selectedPosProfile.name : 'Select POS Profile' }}</span>
+                    <i class="fas fa-chevron-down text-gray-400"></i>
                   </button>
-                </div>
-              </div>
-              <!-- Menu Items Grid -->
-              <div class="w-full sm:w-3/4 p-4">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-                  <h3 class="font-semibold text-gray-700">{{ selectedCategory.name }}</h3>
-                  <div class="flex items-center space-x-3">
-                    <div class="relative">
-                      <input type="text" placeholder="Search items..."
-                        class="pl-8 pr-4 py-2 rounded-md border-none bg-gray-100 text-sm focus:ring-2 focus:ring-indigo-500"
-                        v-model="searchQuery">
-                      <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    </div>
-                    <div class="flex space-x-2">
-                      <button @click="viewMode = 'grid'" :class="[
-                        'p-2 rounded-md cursor-pointer !rounded-button whitespace-nowrap',
-                        viewMode === 'grid' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
-                      ]">
-                        <i class="fas fa-th-large"></i>
-                      </button>
-                      <button @click="viewMode = 'list'" :class="[
-                        'p-2 rounded-md cursor-pointer !rounded-button whitespace-nowrap',
-                        viewMode === 'list' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
-                      ]">
-                        <i class="fas fa-list"></i>
-                      </button>
+                  <div v-if="showPosProfileDropdown"
+                    class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-48 overflow-y-auto">
+                    <div v-for="profile in posProfiles" :key="profile.id" @click="selectPosProfile(profile)"
+                      class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm">
+                      {{ profile.name }}
                     </div>
                   </div>
                 </div>
-                <!-- Grid View -->
-                <div v-if="viewMode === 'grid'"
-                  class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto max-h-[500px]">
-                  <div v-for="item in filteredMenuItems" :key="item.id"
-                    class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                    @click="addItemToOrder(item)">
-                    <div class="h-32 overflow-hidden">
-                      <img :src="item.image" alt="item.name" class="w-full h-full object-cover object-top">
-                    </div>
-                    <div class="p-3">
-                      <div class="flex justify-between items-start">
-                        <h4 class="font-medium text-gray-800">{{ item.name }}</h4>
-                        <span class="font-bold text-indigo-600">${{ item.price.toFixed(2) }}</span>
+              </div>
+              <div class="mb-4">
+                <label class="block text-gray-700 font-medium mb-2">POS Name</label>
+                <input type="text" v-model="posName" placeholder="Enter POS Name"
+                  class="w-full px-3 py-2 rounded-md border-none bg-gray-100 text-sm focus:ring-2 focus:ring-indigo-500">
+              </div>
+            </div>
+            <div class="flex space-x-3">
+              <button @click="confirmPosProfile" :disabled="!canConfirmPosProfile" :class="[
+                'flex-1 py-3 rounded-md font-medium cursor-pointer !rounded-button whitespace-nowrap',
+                canConfirmPosProfile ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              ]">
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Top Navigation Bar -->
+      <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+          <div class="fixed left-4">
+            <button v-if="!showTopMenu" @click="showTopMenu = !showTopMenu"
+              class="p-2 bg-white shadow hover:bg-gray-100">
+              <i class="fas fa-bars text-2xl text-gray-700"></i>
+            </button>
+          </div>
+
+          <div class="flex items-center w-full md:w-auto justify-between">
+            <h1 class="text-xl md:text-2xl font-bold text-indigo-700">ZenTable</h1>
+            <button class="md:hidden text-gray-600" @click="toggleMobileMenu">
+              <i class="fas fa-bars text-xl"></i>
+            </button>
+          </div>
+          <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6 w-full md:w-auto"
+            :class="{ 'hidden': !showMobileMenu, 'md:flex': true }">
+            <div class="text-gray-600">
+              <span class="font-medium">{{ currentDate }}</span> |
+              <span>{{ currentTime }}</span>
+            </div>
+            <div class="flex items-center">
+              <i class="fas fa-user-circle text-indigo-600 text-xl mr-2"></i>
+              <span class="font-medium text-gray-700">John Smith</span>
+            </div>
+            <div class="flex space-x-4">
+              <button class="text-gray-600 hover:text-indigo-600 cursor-pointer">
+                <i class="fas fa-home text-lg"></i>
+              </button>
+              <button class="text-gray-600 hover:text-indigo-600 cursor-pointer">
+                <i class="fas fa-cog text-lg"></i>
+              </button>
+              <button class="text-gray-600 hover:text-red-600 cursor-pointer">
+                <i class="fas fa-sign-out-alt text-lg"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="container mx-auto px-4 py-6">
+        <!-- Main Content Area -->
+        <div class="flex flex-col space-y-6">
+          <!-- Order Processing Area -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Menu Categories and Items -->
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-md">
+              <div class="flex flex-col sm:flex-row h-full">
+                <!-- Categories Sidebar -->
+                <div class="w-full sm:w-1/4 border-b sm:border-b-0 sm:border-r border-gray-200 p-4">
+                  <h3 class="font-semibold text-gray-700 mb-4">Categories</h3>
+                  <div class="space-y-2">
+                    <button v-for="(category, index) in menuCategories" :key="index" @click="selectCategory(category)"
+                      :class="[
+                        'w-full text-left px-3 py-2 rounded-md cursor-pointer whitespace-nowrap !rounded-button',
+                        selectedCategory === category ? 'bg-indigo-100 text-indigo-700 font-medium' : 'text-gray-600 hover:bg-gray-100'
+                      ]">
+                      <i :class="['mr-2', category.icon]"></i>
+                      {{ category.name }}
+                    </button>
+                  </div>
+                </div>
+                <!-- Menu Items Grid -->
+                <div class="w-full sm:w-3/4 p-4">
+                  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                    <h3 class="font-semibold text-gray-700">{{ selectedCategory.name }}</h3>
+                    <div class="flex items-center space-x-3">
+                      <div class="relative">
+                        <input type="text" placeholder="Search items..."
+                          class="pl-8 pr-4 py-2 rounded-md border-none bg-gray-100 text-sm focus:ring-2 focus:ring-indigo-500"
+                          v-model="searchQuery">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                       </div>
-                      <div class="mt-2 flex justify-between items-center">
-                        <span class="text-xs text-gray-500">{{ item.description }}</span>
-                        <button
-                          class="text-indigo-600 hover:text-indigo-800 cursor-pointer !rounded-button whitespace-nowrap">
-                          <i class="fas fa-plus-circle"></i>
+                      <div class="flex space-x-2">
+                        <button @click="viewMode = 'grid'" :class="[
+                          'p-2 rounded-md cursor-pointer !rounded-button whitespace-nowrap',
+                          viewMode === 'grid' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
+                        ]">
+                          <i class="fas fa-th-large"></i>
+                        </button>
+                        <button @click="viewMode = 'list'" :class="[
+                          'p-2 rounded-md cursor-pointer !rounded-button whitespace-nowrap',
+                          viewMode === 'list' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
+                        ]">
+                          <i class="fas fa-list"></i>
                         </button>
                       </div>
                     </div>
                   </div>
-                </div>
-                <!-- List View -->
-                <div v-else class="overflow-y-auto max-h-[500px]">
-                  <div v-for="item in filteredMenuItems" :key="item.id"
-                    class="border border-gray-200 rounded-lg p-3 mb-2 hover:bg-gray-50 transition-colors cursor-pointer flex items-center"
-                    @click="addItemToOrder(item)">
-                    <div class="h-16 w-16 overflow-hidden rounded-md mr-3 flex-shrink-0">
-                      <img :src="item.image" alt="item.name" class="w-full h-full object-cover object-top">
-                    </div>
-                    <div class="flex-grow">
-                      <div class="flex justify-between items-center">
-                        <h4 class="font-medium text-gray-800">{{ item.name }}</h4>
-                        <span class="font-bold text-indigo-600">${{ item.price.toFixed(2) }}</span>
+                  <!-- Grid View -->
+                  <div v-if="viewMode === 'grid'"
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-y-auto max-h-[calc(100vh-200px)]">
+                    <div v-for="item in filteredMenuItems" :key="item.id"
+                      class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                      @click="addItemToOrder(item)">
+                      <div class="h-32 overflow-hidden">
+                        <img :src="item.image" alt="item.name" class="w-full h-full object-cover object-top">
                       </div>
-                      <p class="text-xs text-gray-500 mt-1">{{ item.description }}</p>
-                    </div>
-                    <button
-                      class="ml-3 text-indigo-600 hover:text-indigo-800 cursor-pointer !rounded-button whitespace-nowrap">
-                      <i class="fas fa-plus-circle text-lg"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Order Summary and Actions -->
-          <div class="col-span-1 bg-white rounded-lg shadow-md p-4 flex flex-col">
-            <div class="border-b pb-3 mb-3">
-              <div class="flex justify-between items-center mb-3">
-                <h3 class="font-semibold text-gray-800">Current Order</h3>
-                <span v-if="selectedTable" class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-sm font-medium">
-                  Table {{ selectedTable.number }}
-                </span>
-                <span v-else class="bg-gray-100 text-gray-500 px-2 py-1 rounded text-sm">
-                  No table selected
-                </span>
-              </div>
-              <!-- Customer and Waiter Selection -->
-              <div class="space-y-2">
-                <div class="flex items-center space-x-2">
-                  <div class="relative flex-1">
-                    <button @click="showCustomerDropdown = !showCustomerDropdown"
-                      class="w-full px-3 py-2 bg-gray-50 rounded-md text-left text-sm flex items-center justify-between border border-gray-200 !rounded-button">
-                      <span>{{ selectedCustomer ? selectedCustomer.name : 'Select Customer' }}</span>
-                      <i class="fas fa-chevron-down text-gray-400"></i>
-                    </button>
-                    <div v-if="showCustomerDropdown"
-                      class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-48 overflow-y-auto">
-                      <div v-for="customer in customers" :key="customer.id" @click="selectCustomer(customer)"
-                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm">
-                        {{ customer.name }}
+                      <div class="p-3">
+                        <div class="flex justify-between items-start">
+                          <h4 class="font-medium text-gray-800">{{ item.name }}</h4>
+                          <span class="font-bold text-indigo-600">${{ item.price.toFixed(2) }}</span>
+                        </div>
+                        <div class="mt-2 flex justify-between items-center">
+                          <span class="text-xs text-gray-500">{{ item.description }}</span>
+                          <button
+                            class="text-indigo-600 hover:text-indigo-800 cursor-pointer !rounded-button whitespace-nowrap">
+                            <i class="fas fa-plus-circle"></i>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <button @click="showAddCustomerModal = true"
-                    class="px-3 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 !rounded-button whitespace-nowrap">
-                    <i class="fas fa-plus"></i>
-                  </button>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <div class="relative flex-1">
-                    <button @click="showWaiterDropdown = !showWaiterDropdown"
-                      class="w-full px-3 py-2 bg-gray-50 rounded-md text-left text-sm flex items-center justify-between border border-gray-200 !rounded-button">
-                      <span>{{ selectedWaiter ? selectedWaiter.name : 'Select Waiter' }}</span>
-                      <i class="fas fa-chevron-down text-gray-400"></i>
-                    </button>
-                    <div v-if="showWaiterDropdown"
-                      class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-48 overflow-y-auto">
-                      <div v-for="waiter in waiters" :key="waiter.id" @click="selectWaiter(waiter)"
-                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm">
-                        {{ waiter.name }}
+                  <!-- List View -->
+                  <div v-else class="overflow-y-auto max-h-[calc(100vh-200px)]">
+                    <div v-for="item in filteredMenuItems" :key="item.id"
+                      class="border border-gray-200 rounded-lg p-3 mb-2 hover:bg-gray-50 transition-colors cursor-pointer flex items-center"
+                      @click="addItemToOrder(item)">
+                      <div class="h-16 w-16 overflow-hidden rounded-md mr-3 flex-shrink-0">
+                        <img :src="item.image" alt="item.name" class="w-full h-full object-cover object-top">
                       </div>
+                      <div class="flex-grow">
+                        <div class="flex justify-between items-center">
+                          <h4 class="font-medium text-gray-800">{{ item.name }}</h4>
+                          <span class="font-bold text-indigo-600">${{ item.price.toFixed(2) }}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">{{ item.description }}</p>
+                      </div>
+                      <button
+                        class="ml-3 text-indigo-600 hover:text-indigo-800 cursor-pointer !rounded-button whitespace-nowrap">
+                        <i class="fas fa-plus-circle text-lg"></i>
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="flex-grow overflow-y-auto mb-4 max-h-[400px]">
-              <div v-if="currentOrder.items.length === 0"
-                class="flex flex-col items-center justify-center h-40 text-gray-400">
-                <i class="fas fa-shopping-cart text-4xl mb-2"></i>
-                <p>Your order is empty</p>
-              </div>
-              <div v-else class="space-y-3 pr-2">
-                <div v-for="(item, index) in currentOrder.items" :key="index"
-                  class="flex justify-between items-center p-2 hover:bg-gray-50 rounded-md">
-                  <div class="flex-grow">
-                    <h4 class="font-medium text-gray-800">{{ item.name }}</h4>
-                    <p class="text-sm text-gray-500">${{ item.price.toFixed(2) }}</p>
+            <!-- Order Summary and Actions -->
+            <div class="col-span-1 bg-white rounded-lg shadow-md p-4 flex flex-col">
+              <div class="border-b pb-3 mb-3">
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="font-semibold text-gray-800">Current Order</h3>
+                  <span v-if="selectedTable"
+                    class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-sm font-medium">
+                    Table {{ selectedTable.number }}
+                  </span>
+                  <span v-else class="bg-gray-100 text-gray-500 px-2 py-1 rounded text-sm">
+                    No table selected
+                  </span>
+                </div>
+                <!-- Customer and Waiter Selection -->
+                <div class="space-y-2">
+                  <div class="flex items-center space-x-2">
+                    <div class="relative flex-1">
+                      <button @click="showCustomerDropdown = !showCustomerDropdown"
+                        class="w-full px-3 py-2 bg-gray-50 rounded-md text-left text-sm flex items-center justify-between border border-gray-200 !rounded-button">
+                        <span>{{ selectedCustomer ? selectedCustomer.name : 'Select Customer' }}</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                      </button>
+                      <div v-if="showCustomerDropdown"
+                        class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-48 overflow-y-auto">
+                        <div v-for="customer in customers" :key="customer.id" @click="selectCustomer(customer)"
+                          class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm">
+                          {{ customer.name }}
+                        </div>
+                      </div>
+                    </div>
+                    <button @click="showAddCustomerModal = true"
+                      class="px-3 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 !rounded-button whitespace-nowrap">
+                      <i class="fas fa-plus"></i>
+                    </button>
                   </div>
                   <div class="flex items-center space-x-2">
-                    <button @click="decreaseItemQuantity(index)"
-                      class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 cursor-pointer !rounded-button whitespace-nowrap">
-                      <i class="fas fa-minus text-xs"></i>
-                    </button>
-                    <span class="w-8 text-center">{{ item.quantity }}</span>
-                    <button @click="increaseItemQuantity(index)"
-                      class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 cursor-pointer !rounded-button whitespace-nowrap">
-                      <i class="fas fa-plus text-xs"></i>
-                    </button>
-                    <button @click="removeItemFromOrder(index)"
-                      class="w-7 h-7 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200 cursor-pointer !rounded-button whitespace-nowrap">
-                      <i class="fas fa-trash-alt text-xs"></i>
-                    </button>
+                    <div class="relative flex-1">
+                      <button @click="showWaiterDropdown = !showWaiterDropdown"
+                        class="w-full px-3 py-2 bg-gray-50 rounded-md text-left text-sm flex items-center justify-between border border-gray-200 !rounded-button">
+                        <span>{{ selectedWaiter ? selectedWaiter.name : 'Select Waiter' }}</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                      </button>
+                      <div v-if="showWaiterDropdown"
+                        class="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-48 overflow-y-auto">
+                        <div v-for="waiter in waiters" :key="waiter.id" @click="selectWaiter(waiter)"
+                          class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm">
+                          {{ waiter.name }}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="border-t pt-3">
-              <div class="space-y-2 mb-4">
-                <div class="flex justify-between">
-                  <span class="text-gray-600">Subtotal</span>
-                  <span class="font-medium">${{ calculateSubtotal().toFixed(2) }}</span>
+              <div class="flex-grow overflow-y-auto mb-4 max-h-[200px]">
+                <div v-if="currentOrder.items.length === 0"
+                  class="flex flex-col items-center justify-center h-40 text-gray-400">
+                  <i class="fas fa-shopping-cart text-4xl mb-2"></i>
+                  <p>Your order is empty</p>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-600">Tax (10%)</span>
-                  <span>${{ calculateTax().toFixed(2) }}</span>
+                <div v-else class="space-y-3 pr-2">
+                  <div v-for="(item, index) in currentOrder.items" :key="index"
+                    class="flex justify-between items-center p-2 hover:bg-gray-50 rounded-md">
+                    <div class="flex-grow">
+                      <h4 class="font-medium text-gray-800">{{ item.name }}</h4>
+                      <p class="text-sm text-gray-500">${{ item.price.toFixed(2) }}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <button @click="decreaseItemQuantity(index)"
+                        class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 cursor-pointer !rounded-button whitespace-nowrap">
+                        <i class="fas fa-minus text-xs"></i>
+                      </button>
+                      <span class="w-8 text-center">{{ item.quantity }}</span>
+                      <button @click="increaseItemQuantity(index)"
+                        class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 cursor-pointer !rounded-button whitespace-nowrap">
+                        <i class="fas fa-plus text-xs"></i>
+                      </button>
+                      <button @click="removeItemFromOrder(index)"
+                        class="w-7 h-7 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200 cursor-pointer !rounded-button whitespace-nowrap">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div class="flex justify-between text-lg font-bold">
-                  <span>Total</span>
-                  <span>${{ calculateTotal().toFixed(2) }}</span>
+              </div>
+              <div class="border-t pt-3">
+                <div class="space-y-2 mb-4">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Subtotal</span>
+                    <span class="font-medium">${{ calculateSubtotal().toFixed(2) }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Tax (10%)</span>
+                    <span>${{ calculateTax().toFixed(2) }}</span>
+                  </div>
+                  <div class="flex justify-between text-lg font-bold">
+                    <span>Total</span>
+                    <span>${{ calculateTotal().toFixed(2) }}</span>
+                  </div>
                 </div>
-              </div>
-              <div class="space-y-3 mt-6">
-                <button @click="printKOT" :disabled="!canPlaceOrder" :class="[
-                  'w-full py-2 rounded-md font-medium flex items-center justify-center space-x-2 cursor-pointer !rounded-button whitespace-nowrap',
-                  canPlaceOrder ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                ]">
-                  <i class="fas fa-print"></i>
-                  <span>Print KOT</span>
-                </button>
-                <button @click="proceedToPayment" :disabled="!canPlaceOrder" :class="[
-                  'w-full py-2 rounded-md font-medium flex items-center justify-center space-x-2 cursor-pointer !rounded-button whitespace-nowrap',
-                  canPlaceOrder ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                ]">
-                  <i class="fas fa-credit-card"></i>
-                  <span>Proceed to Payment</span>
-                </button>
-                <button @click="clearOrder" :disabled="currentOrder.items.length === 0" :class="[
-                  'w-full py-2 rounded-md font-medium flex items-center justify-center space-x-2 cursor-pointer !rounded-button whitespace-nowrap',
-                  currentOrder.items.length > 0 ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                ]">
-                  <i class="fas fa-times"></i>
-                  <span>Cancel Order</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Payment Modal -->
-    <div v-if="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg shadow-xl w-1/3 max-h-[90vh] overflow-y-auto">
-        <div class="p-6">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-gray-800">Payment</h2>
-            <button @click="showPaymentModal = false" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div class="mb-6">
-            <div class="bg-indigo-50 p-4 rounded-lg mb-4">
-              <div class="flex justify-between mb-2">
-                <span class="text-gray-600">Table</span>
-                <span class="font-medium">{{ selectedTable?.number }}</span>
-              </div>
-              <div class="flex justify-between mb-2">
-                <span class="text-gray-600">Items</span>
-                <span class="font-medium">{{ currentOrder.items.length }}</span>
-              </div>
-              <div class="flex justify-between mb-2">
-                <span class="text-gray-600">Subtotal</span>
-                <span class="font-medium">${{ calculateSubtotal().toFixed(2) }}</span>
-              </div>
-              <div class="flex justify-between mb-2">
-                <span class="text-gray-600">Tax (10%)</span>
-                <span>${{ calculateTax().toFixed(2) }}</span>
-              </div>
-              <div class="flex justify-between text-lg font-bold">
-                <span>Total</span>
-                <span>${{ calculateTotal().toFixed(2) }}</span>
-              </div>
-            </div>
-            <div class="mb-4">
-              <label class="block text-gray-700 font-medium mb-2">Payment Method</label>
-              <div class="grid grid-cols-3 gap-3">
-                <button v-for="method in paymentMethods" :key="method.id" @click="selectedPaymentMethod = method.id"
-                  :class="[
-                    'py-3 px-4 border rounded-md flex flex-col items-center justify-center cursor-pointer !rounded-button whitespace-nowrap',
-                    selectedPaymentMethod === method.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:bg-gray-50'
+                <div class="space-y-3 mt-6">
+                  <button @click="printKOT" :disabled="!canPlaceOrder" :class="[
+                    'w-full py-2 rounded-md font-medium flex items-center justify-center space-x-2 cursor-pointer !rounded-button whitespace-nowrap',
+                    canPlaceOrder ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   ]">
-                  <i
-                    :class="['text-xl mb-1', method.icon, selectedPaymentMethod === method.id ? 'text-indigo-600' : 'text-gray-600']"></i>
-                  <span :class="selectedPaymentMethod === method.id ? 'text-indigo-600' : 'text-gray-600'">{{
-                    method.name }}</span>
+                    <i class="fas fa-print"></i>
+                    <span>Print KOT</span>
+                  </button>
+                  <button @click="proceedToPayment" :disabled="!canPlaceOrder" :class="[
+                    'w-full py-2 rounded-md font-medium flex items-center justify-center space-x-2 cursor-pointer !rounded-button whitespace-nowrap',
+                    canPlaceOrder ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  ]">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Proceed to Payment</span>
+                  </button>
+                  <button @click="clearOrder" :disabled="currentOrder.items.length === 0" :class="[
+                    'w-full py-2 rounded-md font-medium flex items-center justify-center space-x-2 cursor-pointer !rounded-button whitespace-nowrap',
+                    currentOrder.items.length > 0 ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ]">
+                    <i class="fas fa-times"></i>
+                    <span>Cancel Order</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Payment Modal -->
+        <div v-if="showPaymentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.4);">
+          <div class="bg-white rounded-lg shadow-xl w-1/3 max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+              <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Payment</h2>
+                <button @click="showPaymentModal = false" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div class="mb-6">
+                <div class="bg-indigo-50 p-4 rounded-lg mb-4">
+                  <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">Table</span>
+                    <span class="font-medium">{{ selectedTable?.number }}</span>
+                  </div>
+                  <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">Items</span>
+                    <span class="font-medium">{{ currentOrder.items.length }}</span>
+                  </div>
+                  <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">Subtotal</span>
+                    <span class="font-medium">${{ calculateSubtotal().toFixed(2) }}</span>
+                  </div>
+                  <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">Tax (10%)</span>
+                    <span>${{ calculateTax().toFixed(2) }}</span>
+                  </div>
+                  <div class="flex justify-between text-lg font-bold">
+                    <span>Total</span>
+                    <span>${{ calculateTotal().toFixed(2) }}</span>
+                  </div>
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 font-medium mb-2">Payment Method</label>
+                  <div class="grid grid-cols-3 gap-3">
+                    <button v-for="method in paymentMethods" :key="method.id" @click="selectedPaymentMethod = method.id"
+                      :class="[
+                        'py-3 px-4 border rounded-md flex flex-col items-center justify-center cursor-pointer !rounded-button whitespace-nowrap',
+                        selectedPaymentMethod === method.id ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:bg-gray-50'
+                      ]">
+                      <i
+                        :class="['text-xl mb-1', method.icon, selectedPaymentMethod === method.id ? 'text-indigo-600' : 'text-gray-600']"></i>
+                      <span :class="selectedPaymentMethod === method.id ? 'text-indigo-600' : 'text-gray-600'">{{
+                        method.name }}</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="mb-4">
+                  <label class="block text-gray-700 font-medium mb-2">Discount</label>
+                  <div class="flex">
+                    <input type="number"
+                      class="w-full rounded-l-md border-none bg-gray-100 text-sm focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Enter discount amount" v-model="discountAmount">
+                    <button
+                      class="bg-gray-200 px-4 rounded-r-md text-gray-700 !rounded-button whitespace-nowrap">Apply</button>
+                  </div>
+                </div>
+              </div>
+              <div class="flex space-x-3">
+                <button @click="processPayment"
+                  class="flex-1 bg-green-600 text-white py-3 rounded-md font-medium hover:bg-green-700 cursor-pointer !rounded-button whitespace-nowrap">
+                  Complete Payment
+                </button>
+                <button @click="showPaymentModal = false"
+                  class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-md font-medium hover:bg-gray-300 cursor-pointer !rounded-button whitespace-nowrap">
+                  Cancel
                 </button>
               </div>
             </div>
-            <div class="mb-4">
-              <label class="block text-gray-700 font-medium mb-2">Discount</label>
-              <div class="flex">
-                <input type="number"
-                  class="w-full rounded-l-md border-none bg-gray-100 text-sm focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Enter discount amount" v-model="discountAmount">
-                <button
-                  class="bg-gray-200 px-4 rounded-r-md text-gray-700 !rounded-button whitespace-nowrap">Apply</button>
-              </div>
-            </div>
-          </div>
-          <div class="flex space-x-3">
-            <button @click="processPayment"
-              class="flex-1 bg-green-600 text-white py-3 rounded-md font-medium hover:bg-green-700 cursor-pointer !rounded-button whitespace-nowrap">
-              Complete Payment
-            </button>
-            <button @click="showPaymentModal = false"
-              class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-md font-medium hover:bg-gray-300 cursor-pointer !rounded-button whitespace-nowrap">
-              Cancel
-            </button>
           </div>
         </div>
-      </div>
-    </div>
-    <!-- Invoice Modal -->
-    <div v-if="showInvoiceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg shadow-xl w-1/3 max-h-[90vh] overflow-y-auto">
-        <div class="p-6">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold text-gray-800">Invoice</h2>
-            <button @click="showInvoiceModal = false" class="text-gray-500 hover:text-gray-700 cursor-pointer">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          <div class="border-t border-b border-gray-200 py-4 mb-4">
-            <div class="text-center mb-4">
-              <h1 class="text-2xl font-bold text-indigo-700">FoodiePoint Restaurant</h1>
-              <p class="text-gray-600">123 Main Street, Cityville</p>
-              <p class="text-gray-600">Tel: (123) 456-7890</p>
+        <!-- Invoice Modal -->
+        <div v-if="showInvoiceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="background: rgba(0,0,0,0.4);">
+          <div class="bg-white rounded-lg shadow-xl w-1/3 max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+              <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Invoice</h2>
+                <button @click="showInvoiceModal = false" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div class="border-t border-b border-gray-200 py-4 mb-4">
+                <div class="text-center mb-4">
+                  <h1 class="text-2xl font-bold text-indigo-700">FoodiePoint Restaurant</h1>
+                  <p class="text-gray-600">123 Main Street, Cityville</p>
+                  <p class="text-gray-600">Tel: (123) 456-7890</p>
+                </div>
+                <div class="mb-4">
+                  <div class="flex justify-between mb-1">
+                    <span class="text-gray-600">Invoice #:</span>
+                    <span>INV-{{ invoiceNumber }}</span>
+                  </div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-gray-600">Date:</span>
+                    <span>{{ currentDate }}</span>
+                  </div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-gray-600">Table:</span>
+                    <span>{{ selectedTable?.number }}</span>
+                  </div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-gray-600">Customer:</span>
+                    <span>{{ selectedCustomer?.name || 'Walk-in Customer' }}</span>
+                  </div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-gray-600">Server:</span>
+                    <span>{{ selectedWaiter?.name || 'Not Assigned' }}</span>
+                  </div>
+                </div>
+                <div class="mb-4">
+                  <div class="flex font-medium text-gray-700 border-b pb-2 mb-2">
+                    <div class="w-1/2">Item</div>
+                    <div class="w-1/6 text-center">Qty</div>
+                    <div class="w-1/6 text-right">Price</div>
+                    <div class="w-1/6 text-right">Total</div>
+                  </div>
+                  <div v-for="(item, index) in currentOrder.items" :key="index" class="flex py-1">
+                    <div class="w-1/2">{{ item.name }}</div>
+                    <div class="w-1/6 text-center">{{ item.quantity }}</div>
+                    <div class="w-1/6 text-right">${{ item.price.toFixed(2) }}</div>
+                    <div class="w-1/6 text-right">${{ (item.price * item.quantity).toFixed(2) }}</div>
+                  </div>
+                </div>
+                <div class="border-t pt-2">
+                  <div class="flex justify-between mb-1">
+                    <span class="text-gray-600">Subtotal:</span>
+                    <span>${{ calculateSubtotal().toFixed(2) }}</span>
+                  </div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-gray-600">Tax (10%):</span>
+                    <span>${{ calculateTax().toFixed(2) }}</span>
+                  </div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-gray-600">Discount:</span>
+                    <span>${{ parseFloat(discountAmount || 0).toFixed(2) }}</span>
+                  </div>
+                  <div class="flex justify-between font-bold text-lg">
+                    <span>Total:</span>
+                    <span>${{ (calculateTotal() - parseFloat(discountAmount || 0)).toFixed(2) }}</span>
+                  </div>
+                </div>
+                <div class="mt-4 text-center text-gray-600">
+                  <p>Thank you for dining with us!</p>
+                  <p>Please come again.</p>
+                </div>
+              </div>
+              <div class="flex space-x-3">
+                <button @click="printInvoice"
+                  class="flex-1 bg-indigo-600 text-white py-3 rounded-md font-medium hover:bg-indigo-700 flex items-center justify-center cursor-pointer !rounded-button whitespace-nowrap">
+                  <i class="fas fa-print mr-2"></i>
+                  Print Invoice
+                </button>
+                <button @click="finishOrder"
+                  class="flex-1 bg-green-600 text-white py-3 rounded-md font-medium hover:bg-green-700 cursor-pointer !rounded-button whitespace-nowrap">
+                  Finish
+                </button>
+              </div>
             </div>
-            <div class="mb-4">
-              <div class="flex justify-between mb-1">
-                <span class="text-gray-600">Invoice #:</span>
-                <span>INV-{{ invoiceNumber }}</span>
-              </div>
-              <div class="flex justify-between mb-1">
-                <span class="text-gray-600">Date:</span>
-                <span>{{ currentDate }}</span>
-              </div>
-              <div class="flex justify-between mb-1">
-                <span class="text-gray-600">Table:</span>
-                <span>{{ selectedTable?.number }}</span>
-              </div>
-              <div class="flex justify-between mb-1">
-                <span class="text-gray-600">Customer:</span>
-                <span>{{ selectedCustomer?.name || 'Walk-in Customer' }}</span>
-              </div>
-              <div class="flex justify-between mb-1">
-                <span class="text-gray-600">Server:</span>
-                <span>{{ selectedWaiter?.name || 'Not Assigned' }}</span>
-              </div>
-            </div>
-            <div class="mb-4">
-              <div class="flex font-medium text-gray-700 border-b pb-2 mb-2">
-                <div class="w-1/2">Item</div>
-                <div class="w-1/6 text-center">Qty</div>
-                <div class="w-1/6 text-right">Price</div>
-                <div class="w-1/6 text-right">Total</div>
-              </div>
-              <div v-for="(item, index) in currentOrder.items" :key="index" class="flex py-1">
-                <div class="w-1/2">{{ item.name }}</div>
-                <div class="w-1/6 text-center">{{ item.quantity }}</div>
-                <div class="w-1/6 text-right">${{ item.price.toFixed(2) }}</div>
-                <div class="w-1/6 text-right">${{ (item.price * item.quantity).toFixed(2) }}</div>
-              </div>
-            </div>
-            <div class="border-t pt-2">
-              <div class="flex justify-between mb-1">
-                <span class="text-gray-600">Subtotal:</span>
-                <span>${{ calculateSubtotal().toFixed(2) }}</span>
-              </div>
-              <div class="flex justify-between mb-1">
-                <span class="text-gray-600">Tax (10%):</span>
-                <span>${{ calculateTax().toFixed(2) }}</span>
-              </div>
-              <div class="flex justify-between mb-1">
-                <span class="text-gray-600">Discount:</span>
-                <span>${{ parseFloat(discountAmount || 0).toFixed(2) }}</span>
-              </div>
-              <div class="flex justify-between font-bold text-lg">
-                <span>Total:</span>
-                <span>${{ (calculateTotal() - parseFloat(discountAmount || 0)).toFixed(2) }}</span>
-              </div>
-            </div>
-            <div class="mt-4 text-center text-gray-600">
-              <p>Thank you for dining with us!</p>
-              <p>Please come again.</p>
-            </div>
-          </div>
-          <div class="flex space-x-3">
-            <button @click="printInvoice"
-              class="flex-1 bg-indigo-600 text-white py-3 rounded-md font-medium hover:bg-indigo-700 flex items-center justify-center cursor-pointer !rounded-button whitespace-nowrap">
-              <i class="fas fa-print mr-2"></i>
-              Print Invoice
-            </button>
-            <button @click="finishOrder"
-              class="flex-1 bg-green-600 text-white py-3 rounded-md font-medium hover:bg-green-700 cursor-pointer !rounded-button whitespace-nowrap">
-              Finish
-            </button>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
 <script lang="ts" setup>
 import { ref, computed, onMounted } from 'vue';
 
@@ -530,6 +526,8 @@ const showPosProfileModal = ref(true);
 const showPosProfileDropdown = ref(false);
 const selectedPosProfile = ref(null);
 const posName = ref('');
+const showRoomsSection = ref(true);
+const showTablesSection = ref(true);
 
 const posProfiles = ref([
   { id: 1, name: 'Restaurant Standard', type: 'restaurant' },
@@ -1061,7 +1059,14 @@ const finishOrder = () => {
   // Close the invoice modal
   showInvoiceModal.value = false;
 };
+
+// Sidebar toggle state
+const showSidebar = ref(false);
+
+// Top menu toggle state
+const showTopMenu = ref(false);
 </script>
+
 <style scoped>
 /* Responsive adjustments */
 @media (max-width: 640px) {
@@ -1169,5 +1174,27 @@ input[type="number"] {
   /* IE and Edge */
   scrollbar-width: none;
   /* Firefox */
+}
+
+/* Slide transition for sidebar */
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateX(-100%);
+}
+
+/* Slide down transition for top menu */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: transform 0.3s;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  transform: translateY(-100%);
 }
 </style>
